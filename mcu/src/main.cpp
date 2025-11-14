@@ -6,31 +6,24 @@
 #include "display.h"
 #include "color_sensor.h"
 
-Display display;
-ColorSensor sensor;
+Display display(128, 32, 21, 22);
+ColorSensor sensor(25, 26, 27, 14, 33, 32);
 
 void setup()
 {
-  Serial.begin(115120);
+  Serial.begin(9600);
   delay(1000);
   Serial.println("Starting...");
 
-  // Initialize I2C
-  Wire.begin(21, 22); // SDA=21, SCL=22
-  Serial.println("I2C initialized");
-
-  // Initialize OLED display
   if (!display.begin())
   {
     for (;;)
-      ; // Don't proceed, loop forever
+      ;
   }
 
-  // Show welcome message
   display.showWelcome();
   delay(2000);
 
-  // Initialize color sensor
   sensor.begin();
 
   Serial.println("Setup complete!");
@@ -38,11 +31,9 @@ void setup()
 
 void loop()
 {
-  // Read color from sensor
   RGBColor color = sensor.readColor();
   String colorName = sensor.detectColorName(color);
 
-  // Display on OLED and Serial
   display.showColorData(color.red, color.green, color.blue, colorName);
   sensor.printColorData(color, colorName);
 

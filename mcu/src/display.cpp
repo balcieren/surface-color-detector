@@ -1,7 +1,11 @@
 #include "display.h"
 #include <Wire.h>
 
-Display::Display() : oled(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET)
+Display::Display(uint8_t width, uint8_t height, uint8_t sda, uint8_t scl, uint8_t address, int8_t reset)
+    : oled(width, height, &Wire, reset),
+      sdaPin(sda), sclPin(scl),
+      screenWidth(width), screenHeight(height),
+      resetPin(reset), i2cAddress(address)
 {
 }
 
@@ -14,16 +18,18 @@ void Display::prepareDisplay()
 
 bool Display::begin()
 {
+  Wire.begin(sdaPin, sclPin);
   Serial.println("Initializing OLED...");
 
-  if (!oled.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS))
+  if (!oled.begin(SSD1306_SWITCHCAPVCC, i2cAddress))
   {
     Serial.println(F("SSD1306 allocation failed!"));
     Serial.println(F("Check connections:"));
-    Serial.println(F("  VCC -> 3.3V"));
-    Serial.println(F("  GND -> GND"));
-    Serial.println(F("  SDA -> GPIO 21"));
-    Serial.println(F("  SCL -> GPIO 22"));
+    Serial.print(F("  VCC -> 3.3V, GND -> GND"));
+    Serial.print(F("  SDA -> GPIO "));
+    Serial.print(sdaPin);
+    Serial.print(F(", SCL -> GPIO "));
+    Serial.println(sclPin);
     return false;
   }
 

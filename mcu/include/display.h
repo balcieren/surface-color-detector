@@ -4,22 +4,21 @@
 #include <Adafruit_SSD1306.h>
 #include <Arduino.h>
 
-// OLED Display Settings
-#define SCREEN_WIDTH 128
-#define SCREEN_HEIGHT 32
-#define OLED_RESET -1
-#define SCREEN_ADDRESS 0x3C
-
 class Display
 {
 private:
   Adafruit_SSD1306 oled;
+  uint8_t sdaPin;
+  uint8_t sclPin;
+  uint8_t screenWidth;
+  uint8_t screenHeight;
+  int8_t resetPin;
+  uint8_t i2cAddress;
 
-  // Helper method to setup display for drawing
   void prepareDisplay();
 
 public:
-  Display();
+  Display(uint8_t width, uint8_t height, uint8_t sda, uint8_t scl, uint8_t address = 0x3C, int8_t reset = -1);
   bool begin();
   void showWelcome();
   void showColorData(int red, int green, int blue, String colorName);

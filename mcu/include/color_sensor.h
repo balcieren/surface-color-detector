@@ -3,14 +3,6 @@
 
 #include <Arduino.h>
 
-// TCS230 or TCS3200 pins
-#define S0 25
-#define S1 26
-#define S2 27
-#define S3 14
-#define LED 32
-#define SENSOR_OUT 33
-
 struct RGBColor
 {
   int red;
@@ -21,15 +13,21 @@ struct RGBColor
 class ColorSensor
 {
 private:
+  uint8_t s0Pin;
+  uint8_t s1Pin;
+  uint8_t s2Pin;
+  uint8_t s3Pin;
+  uint8_t outPin;
+  uint8_t ledPin;
+
   int redFreq;
   int greenFreq;
   int blueFreq;
 
-  // Helper method to read a single color channel
   int readColorChannel(uint8_t s2State, uint8_t s3State, int minFreq, int maxFreq);
 
 public:
-  ColorSensor();
+  ColorSensor(uint8_t s0, uint8_t s1, uint8_t s2, uint8_t s3, uint8_t out, uint8_t led);
   void begin();
   RGBColor readColor();
   String detectColorName(const RGBColor &color);

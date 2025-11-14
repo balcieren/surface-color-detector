@@ -1,14 +1,16 @@
 #include "color_sensor.h"
 
-ColorSensor::ColorSensor() : redFreq(0), greenFreq(0), blueFreq(0)
+ColorSensor::ColorSensor(uint8_t s0, uint8_t s1, uint8_t s2, uint8_t s3, uint8_t out, uint8_t led)
+    : s0Pin(s0), s1Pin(s1), s2Pin(s2), s3Pin(s3), outPin(out), ledPin(led),
+      redFreq(0), greenFreq(0), blueFreq(0)
 {
 }
 
 int ColorSensor::readColorChannel(uint8_t s2State, uint8_t s3State, int minFreq, int maxFreq)
 {
-  digitalWrite(S2, s2State);
-  digitalWrite(S3, s3State);
-  int freq = pulseIn(SENSOR_OUT, LOW);
+  digitalWrite(s2Pin, s2State);
+  digitalWrite(s3Pin, s3State);
+  int freq = pulseIn(outPin, LOW);
   int value = map(freq, minFreq, maxFreq, 255, 0);
   value = constrain(value, 0, 255);
   delay(50);
@@ -17,28 +19,26 @@ int ColorSensor::readColorChannel(uint8_t s2State, uint8_t s3State, int minFreq,
 
 void ColorSensor::begin()
 {
-  pinMode(S0, OUTPUT);
-  pinMode(S1, OUTPUT);
-  pinMode(S2, OUTPUT);
-  pinMode(S3, OUTPUT);
-  pinMode(SENSOR_OUT, INPUT);
-  pinMode(LED, OUTPUT);
+  pinMode(s0Pin, OUTPUT);
+  pinMode(s1Pin, OUTPUT);
+  pinMode(s2Pin, OUTPUT);
+  pinMode(s3Pin, OUTPUT);
+  pinMode(outPin, INPUT);
+  pinMode(ledPin, OUTPUT);
 
-  // Setting frequency scaling to 20%
-  digitalWrite(S0, HIGH);
-  digitalWrite(S1, LOW);
+  digitalWrite(s0Pin, HIGH);
+  digitalWrite(s1Pin, LOW);
 
-  // Turn on LED
-  digitalWrite(LED, HIGH);
+  digitalWrite(ledPin, HIGH);
 }
 
 RGBColor ColorSensor::readColor()
 {
   RGBColor color;
 
-  color.red = readColorChannel(LOW, LOW, 36, 255);     // Red filter
-  color.green = readColorChannel(HIGH, HIGH, 35, 255); // Green filter
-  color.blue = readColorChannel(LOW, HIGH, 34, 255);   // Blue filter
+  color.red = readColorChannel(LOW, LOW, 36, 255);
+  color.green = readColorChannel(HIGH, HIGH, 35, 255);
+  color.blue = readColorChannel(LOW, HIGH, 34, 255);
 
   return color;
 }
