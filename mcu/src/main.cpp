@@ -16,7 +16,11 @@ Button button(13);
 void handleSampling(const RGBColor &color)
 {
   sampler.addSample(color);
-  display.showColorData(color.red, color.green, color.blue, "SAMPLING...");
+
+  RGBColor avgColor = sampler.getAverage();
+  String avgColorName = sensor.detectColorName(avgColor);
+
+  display.showColorData(avgColor.red, avgColor.green, avgColor.blue, avgColorName);
   sampler.printSample(color);
 }
 
@@ -62,14 +66,11 @@ void setup()
 void loop()
 {
   RGBColor color = sensor.readColor();
-  String colorName = sensor.detectColorName(color);
 
   if (button.isPressed())
     handleSampling(color);
   else if (sampler.isSampling())
     handleSampleComplete();
-  else
-    handleNormalMode(color, colorName);
 
   delay(100);
 }
