@@ -5,9 +5,38 @@
 #include <Wire.h>
 #include "display.h"
 #include "color_sensor.h"
+#include "color_sampler.h"
+#include "button.h"
 
 Display display(128, 32, 21, 22);
 ColorSensor sensor(25, 26, 27, 14, 33, 32);
+ColorSampler sampler;
+Button button(13);
+
+void handleSampling(const RGBColor &color)
+{
+  sampler.addSample(color);
+  display.showColorData(color.red, color.green, color.blue, "SAMPLING...");
+  sampler.printSample(color);
+}
+
+void handleSampleComplete()
+{
+  RGBColor avgColor = sampler.getAverage();
+  String avgColorName = sensor.detectColorName(avgColor);
+
+  sampler.printAverage(avgColor, avgColorName);
+  display.showColorData(avgColor.red, avgColor.green, avgColor.blue, avgColorName);
+  delay(3000);
+
+  sampler.reset();
+}
+
+void handleNormalMode(const RGBColor &color, const String &colorName)
+{
+  display.showColorData(color.red, color.green, color.blue, colorName);
+  sensor.printColorData(color, colorName);
+}
 
 void setup()
 {
@@ -25,6 +54,7 @@ void setup()
   delay(2000);
 
   sensor.begin();
+  button.begin();
 
   Serial.println("Setup complete!");
 }
@@ -34,8 +64,12 @@ void loop()
   RGBColor color = sensor.readColor();
   String colorName = sensor.detectColorName(color);
 
-  display.showColorData(color.red, color.green, color.blue, colorName);
-  sensor.printColorData(color, colorName);
+  if (button.isPressed())
+    handleSampling(color);
+  else if (sampler.isSampling())
+    handleSampleComplete();
+  else
+    handleNormalMode(color, colorName);
 
-  delay(200);
+  delay(100);
 }
