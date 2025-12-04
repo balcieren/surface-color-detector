@@ -68,7 +68,7 @@ void setup()
 
   sensor.begin();
   button.begin();
-  ble.begin("ColorSensor");
+  ble.begin("Surface Color Detector");
 
   Serial.println("Setup complete!");
 }
