@@ -7,11 +7,13 @@
 #include "color_sensor.h"
 #include "color_sampler.h"
 #include "button.h"
+#include "ble_service.h"
 
 Display display(128, 32, 21, 22);
 ColorSensor sensor(25, 26, 27, 14, 33, 32);
 ColorSampler sampler;
 Button button(13);
+Bluetooth ble;
 
 void handleSampling(const RGBColor &color)
 {
@@ -31,6 +33,13 @@ void handleSampleComplete()
 
   sampler.printAverage(avgColor, avgColorName);
   display.showColorData(avgColor.red, avgColor.green, avgColor.blue, avgColorName);
+
+  String bleData = String(avgColor.red) + "," +
+                   String(avgColor.green) + "," +
+                   String(avgColor.blue) + "," +
+                   avgColorName;
+  ble.send(bleData);
+
   delay(3000);
 
   sampler.reset();
@@ -59,6 +68,7 @@ void setup()
 
   sensor.begin();
   button.begin();
+  ble.begin("Surface Color Detector");
 
   Serial.println("Setup complete!");
 }
