@@ -10,10 +10,10 @@
 #include "ble_service.h"
 
 Display display(128, 32, 21, 22);
-ColorSensor sensor(25, 26, 27, 14, 33, 32);
+ColorSensor sensor(27,14, 32, 33, 34, 26);
 ColorSampler sampler;
-Button button(13);
-Bluetooth ble;
+Button button(12);
+// Bluetooth ble;
 
 void handleSampling(const RGBColor &color)
 {
@@ -34,11 +34,11 @@ void handleSampleComplete()
   sampler.printAverage(avgColor, avgColorName);
   display.showColorData(avgColor.red, avgColor.green, avgColor.blue, avgColorName);
 
-  String bleData = String(avgColor.red) + "," +
-                   String(avgColor.green) + "," +
-                   String(avgColor.blue) + "," +
-                   avgColorName;
-  ble.send(bleData);
+  // String bleData = String(avgColor.red) + "," +
+  //                  String(avgColor.green) + "," +
+  //                  String(avgColor.blue) + "," +
+  //                  avgColorName;
+  // ble.send(bleData);
 
   delay(3000);
 
@@ -68,7 +68,7 @@ void setup()
 
   sensor.begin();
   button.begin();
-  ble.begin("Surface Color Detector");
+  // ble.begin("Surface Color Detector");
 
   Serial.println("Setup complete!");
 }
