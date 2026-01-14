@@ -4,8 +4,7 @@
 #include <Adafruit_SSD1306.h>
 #include <Arduino.h>
 
-class Display
-{
+class Display {
 private:
   Adafruit_SSD1306 oled;
   uint8_t sdaPin;
@@ -18,10 +17,16 @@ private:
   void prepareDisplay();
 
 public:
-  Display(uint8_t width, uint8_t height, uint8_t sda, uint8_t scl, uint8_t address = 0x3C, int8_t reset = -1);
+  Display(uint8_t width, uint8_t height, uint8_t sda, uint8_t scl,
+          uint8_t address = 0x3C, int8_t reset = -1);
   bool begin();
+  void showSplash();
   void showWelcome();
   void showColorData(int red, int green, int blue, String colorName);
+  void showSamplingMode(int sampleCount, int red, int green, int blue,
+                        String colorName);
+  void showProgress(int percentage);
+  void showMessage(String line1, String line2 = "");
 };
 
 #endif
