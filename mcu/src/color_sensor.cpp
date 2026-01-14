@@ -1,5 +1,8 @@
 #include "color_sensor.h"
 
+// Comment out to disable debug output
+#define DEBUG_SENSOR
+
 ColorSensor::ColorSensor(uint8_t s0, uint8_t s1, uint8_t s2, uint8_t s3,
                          uint8_t out, uint8_t led)
     : s0Pin(s0), s1Pin(s1), s2Pin(s2), s3Pin(s3), outPin(out), ledPin(led),
@@ -21,31 +24,44 @@ void ColorSensor::begin() {
   digitalWrite(ledPin, HIGH);
 }
 
-void ColorSensor::ensureLedOn() { digitalWrite(ledPin, HIGH); }
-
-int ColorSensor::readColorChannel(uint8_t s2State, uint8_t s3State, int minFreq,
-                                  int maxFreq) {
-  digitalWrite(s2Pin, s2State);
-  digitalWrite(s3Pin, s3State);
-  digitalWrite(ledPin, HIGH); // Keep LED stable during read
-  delay(20);                  // Reduced from 100ms for faster readings
-
-  int freq = pulseIn(outPin, LOW);
-  int mapped = map(freq, minFreq, maxFreq, 255, 0);
-  return constrain(mapped, 0, 255);
+void ColorSensor::ensureLedOn() {
+  // LED is already on from begin(), no need to toggle
 }
 
 RGBColor ColorSensor::readColor() {
   RGBColor color;
 
-  // Red channel (S2=LOW, S3=LOW)
-  color.red = readColorChannel(LOW, LOW, 25, 72);
+  // Read raw frequencies once
+  digitalWrite(s2Pin, LOW);
+  digitalWrite(s3Pin, LOW);
+  delay(20);
+  int redFreq = pulseIn(outPin, LOW, 100000);
 
-  // Green channel (S2=HIGH, S3=HIGH)
-  color.green = readColorChannel(HIGH, HIGH, 30, 90);
+  digitalWrite(s2Pin, HIGH);
+  digitalWrite(s3Pin, HIGH);
+  delay(20);
+  int greenFreq = pulseIn(outPin, LOW, 100000);
 
-  // Blue channel (S2=LOW, S3=HIGH)
-  color.blue = readColorChannel(LOW, HIGH, 25, 70);
+  digitalWrite(s2Pin, LOW);
+  digitalWrite(s3Pin, HIGH);
+  delay(20);
+  int blueFreq = pulseIn(outPin, LOW, 100000);
+
+  // Debug: Print raw frequencies for calibration
+#ifdef DEBUG_SENSOR
+  Serial.print("Freq R:");
+  Serial.print(redFreq);
+  Serial.print(" G:");
+  Serial.print(greenFreq);
+  Serial.print(" B:");
+  Serial.println(blueFreq);
+#endif
+
+  // Map frequencies to RGB values (0-255)
+  // Calibrated: WHITE minFreq, BLACK maxFreq
+  color.red = constrain(map(redFreq, 26, 155, 255, 0), 0, 255);
+  color.green = constrain(map(greenFreq, 24, 166, 255, 0), 0, 255);
+  color.blue = constrain(map(blueFreq, 30, 197, 255, 0), 0, 255);
 
   return color;
 }
@@ -85,8 +101,18 @@ String ColorSensor::detectColorName(const RGBColor &color) {
     return "WHITE";
   }
 
-  // RED
-  if (r > g + 40 && r > b + 40) {
+  // YELLOW - check before RED (both R and G are high in yellow)
+  if (r > 120 && g > 120 && b < 80 && abs(r - g) < 50) {
+    return "YELLOW";
+  }
+
+  // ORANGE - check before RED
+  if (r > 150 && g > 60 && g < 140 && b < 70) {
+    return "ORANGE";
+  }
+
+  // RED - lowered threshold for better detection
+  if (r > g + 25 && r > b + 25) {
     if (brightness < 80)
       return "DARK RED";
     return "RED";
@@ -100,20 +126,10 @@ String ColorSensor::detectColorName(const RGBColor &color) {
   }
 
   // BLUE
-  if (b > r + 40 && b > g + 40) {
+  if (b > r + 40 && b > g > 40) {
     if (brightness < 80)
       return "DARK BLUE";
     return "BLUE";
-  }
-
-  // YELLOW
-  if (r > 150 && g > 150 && b < 100) {
-    return "YELLOW";
-  }
-
-  // ORANGE
-  if (r > 180 && g > 80 && g < 160 && b < 80) {
-    return "ORANGE";
   }
 
   // BROWN
@@ -124,6 +140,18 @@ String ColorSensor::detectColorName(const RGBColor &color) {
   // CYAN
   if (g > 150 && b > 150 && r < 100) {
     return "CYAN";
+  }
+
+  // MAGENTA / PURPLE
+  if (r > 120 && b > 120 && g < 100) {
+    if (r > b + 30)
+      return "MAGENTA";
+    return "PURPLE";
+  }
+
+  // PINK
+  if (r > 180 && g > 100 && g < 180 && b > 120 && b < 200) {
+    return "PINK";
   }
 
   return "UNKNOWN";
