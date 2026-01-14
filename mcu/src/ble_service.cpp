@@ -2,30 +2,27 @@
 
 static bool _deviceConnected = false;
 
-class ServerCallbacks : public BLEServerCallbacks
-{
-  void onConnect(BLEServer *pServer)
-  {
+class ServerCallbacks : public BLEServerCallbacks {
+  void onConnect(BLEServer *pServer) {
     _deviceConnected = true;
     Serial.println("BLE Client connected");
   }
 
-  void onDisconnect(BLEServer *pServer)
-  {
+  void onDisconnect(BLEServer *pServer) {
     _deviceConnected = false;
     Serial.println("BLE Client disconnected");
     pServer->startAdvertising();
   }
 };
 
-Bluetooth::Bluetooth()
-    : pServer(nullptr), pCharacteristic(nullptr)
-{
-}
+Bluetooth::Bluetooth() : pServer(nullptr), pCharacteristic(nullptr) {}
 
-void Bluetooth::begin(const char *deviceName)
-{
+void Bluetooth::begin(const char *deviceName) {
   BLEDevice::init(deviceName);
+
+  // Set TX power to maximum for better range
+  esp_ble_tx_power_set(ESP_BLE_PWR_TYPE_DEFAULT, ESP_PWR_LVL_P9);
+  esp_ble_tx_power_set(ESP_BLE_PWR_TYPE_ADV, ESP_PWR_LVL_P9);
 
   pServer = BLEDevice::createServer();
   pServer->setCallbacks(new ServerCallbacks());
@@ -33,28 +30,28 @@ void Bluetooth::begin(const char *deviceName)
   BLEService *pService = pServer->createService(SERVICE_UUID);
 
   pCharacteristic = pService->createCharacteristic(
-      CHARACTERISTIC_UUID,
-      BLECharacteristic::PROPERTY_READ |
-          BLECharacteristic::PROPERTY_WRITE |
-          BLECharacteristic::PROPERTY_NOTIFY |
-          BLECharacteristic::PROPERTY_INDICATE);
+      CHARACTERISTIC_UUID, BLECharacteristic::PROPERTY_READ |
+                               BLECharacteristic::PROPERTY_WRITE |
+                               BLECharacteristic::PROPERTY_NOTIFY |
+                               BLECharacteristic::PROPERTY_INDICATE);
 
   pCharacteristic->addDescriptor(new BLE2902());
   pService->start();
 
+  // iOS-compatible advertising settings
   BLEAdvertising *pAdvertising = BLEDevice::getAdvertising();
   pAdvertising->addServiceUUID(SERVICE_UUID);
-  pAdvertising->setScanResponse(false);
-  pAdvertising->setMinPreferred(0x0);
+  pAdvertising->setScanResponse(true); // Enable scan response for iOS
+  pAdvertising->setMinPreferred(0x06); // Helps with iPhone connection
+  pAdvertising->setMaxPreferred(0x12);
   BLEDevice::startAdvertising();
 
-  Serial.println("BLE started, waiting for connections...");
+  Serial.println("BLE started: " + String(deviceName));
+  Serial.println("Waiting for connections...");
 }
 
-void Bluetooth::send(const String &data)
-{
-  if (_deviceConnected)
-  {
+void Bluetooth::send(const String &data) {
+  if (_deviceConnected) {
     pCharacteristic->setValue(data.c_str());
     pCharacteristic->notify();
 
@@ -63,7 +60,4 @@ void Bluetooth::send(const String &data)
   }
 }
 
-bool Bluetooth::isConnected()
-{
-  return _deviceConnected;
-}
+bool Bluetooth::isConnected() { return _deviceConnected; }
