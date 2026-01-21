@@ -65,6 +65,27 @@ bool SamplingController::canFinalize() {
 }
 
 void SamplingController::onLongPress() {
+  // If no samples, treat long press as LED toggle command
+  if (sampler.getSampleCount() == 0) {
+    sensor.toggleLed();
+    if (sensor.isLedOn()) {
+      Serial.println("LED turned ON");
+      display.showMessage("LED ON", "Sensor LED Enabled");
+    } else {
+      Serial.println("LED turned OFF");
+      display.showMessage("LED OFF", "Sensor LED Disabled");
+    }
+
+    // Wait for button release to avoid immediate re-trigger or other issues
+    while (button.isPressed()) {
+      delay(50);
+    }
+
+    delay(1000);
+    display.showMessage("Ready!", "Press to sample");
+    return;
+  }
+
   if (!canFinalize())
     return;
 
@@ -112,9 +133,7 @@ void SamplingController::update() {
 
   if (currentButtonState) {
     if (!lastButtonState) {
-      // Read color only when taking a sample
-      RGBColor color = sensor.readColor();
-      onSampleTaken(color);
+      // Button just pressed - wait for release or long press
     }
 
     unsigned long duration = button.getPressedDuration();
@@ -133,13 +152,25 @@ void SamplingController::update() {
       longPressHandled = true;
     }
   } else {
+    // Button Released
     if (lastButtonState && !longPressHandled) {
-      if (sampler.getSampleCount() > 0) {
+      // Short press released -> Take Sample
+      RGBColor color = sensor.readColor();
+      onSampleTaken(color);
+    }
+
+    if (lastButtonState && !longPressHandled) {
+      // If we just took a sample or updated state, show it
+      // The display update is inside onSampleTaken usually
+    } else {
+      // Idle state
+      if (!longPressHandled && sampler.getSampleCount() > 0) {
         display.showSamplingMode(sampler.getSampleCount(), lastAvgColor.red,
                                  lastAvgColor.green, lastAvgColor.blue,
                                  lastColorName);
       }
     }
+
     longPressHandled = false;
   }
 

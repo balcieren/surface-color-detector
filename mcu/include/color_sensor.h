@@ -27,6 +27,9 @@ public:
               uint8_t led);
   void begin();
   void ensureLedOn();
+  void setLed(bool state);
+  void toggleLed();
+  bool isLedOn() const;
   RGBColor readColor();
   String detectColorName(const RGBColor &color);
   void printColorData(const RGBColor &color, const String &colorName);

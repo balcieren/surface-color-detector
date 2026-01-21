@@ -24,6 +24,14 @@ void ColorSensor::begin() {
   digitalWrite(ledPin, HIGH);
 }
 
+void ColorSensor::setLed(bool state) {
+  digitalWrite(ledPin, state ? HIGH : LOW);
+}
+
+void ColorSensor::toggleLed() { digitalWrite(ledPin, !digitalRead(ledPin)); }
+
+bool ColorSensor::isLedOn() const { return digitalRead(ledPin) == HIGH; }
+
 void ColorSensor::ensureLedOn() {
   // LED is already on from begin(), no need to toggle
 }
