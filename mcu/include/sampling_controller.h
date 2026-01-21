@@ -21,8 +21,10 @@ private:
   int minSamplesRequired;
 
   // State
+  // State
   bool lastButtonState;
   bool longPressHandled;
+  unsigned long pressStartTime;
   RGBColor lastAvgColor;
   String lastColorName;
 

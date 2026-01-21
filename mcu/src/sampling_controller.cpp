@@ -132,24 +132,29 @@ void SamplingController::update() {
   bool currentButtonState = button.isPressed();
 
   if (currentButtonState) {
+    // Button Just Pressed
     if (!lastButtonState) {
-      // Button just pressed - wait for release or long press
+      pressStartTime = millis();
     }
 
-    unsigned long duration = button.getPressedDuration();
-    if (duration > 0 && !longPressHandled) {
-      int progress = min(100, (int)((duration * 100) / longPressDuration));
+    // While Pressed
+    if (!longPressHandled) {
+      unsigned long duration = millis() - pressStartTime;
 
-      // Show progress bar after 200ms of holding
-      if (duration > 200) {
-        display.showProgress(progress);
+      // Progress Bar Logic
+      if (duration > 0) {
+        int progress = min(100, (int)((duration * 100) / longPressDuration));
+        if (duration > 200) {
+          display.showProgress(progress);
+        }
       }
-    }
 
-    if (button.isPressedFor(longPressDuration) && !longPressHandled) {
-      Serial.println("Long press detected! Finalizing...");
-      onLongPress();
-      longPressHandled = true;
+      // Long Press Detection
+      if (duration >= longPressDuration) {
+        Serial.println("Long press detected! Finalizing...");
+        onLongPress();
+        longPressHandled = true;
+      }
     }
   } else {
     // Button Released
@@ -159,21 +164,19 @@ void SamplingController::update() {
       onSampleTaken(color);
     }
 
-    if (lastButtonState && !longPressHandled) {
-      // If we just took a sample or updated state, show it
-      // The display update is inside onSampleTaken usually
-    } else {
-      // Idle state
-      if (!longPressHandled && sampler.getSampleCount() > 0) {
-        display.showSamplingMode(sampler.getSampleCount(), lastAvgColor.red,
-                                 lastAvgColor.green, lastAvgColor.blue,
-                                 lastColorName);
-      }
+    // Idle state check
+    if (!lastButtonState && !longPressHandled && sampler.getSampleCount() > 0) {
+      display.showSamplingMode(sampler.getSampleCount(), lastAvgColor.red,
+                               lastAvgColor.green, lastAvgColor.blue,
+                               lastColorName);
     }
 
     longPressHandled = false;
+    pressStartTime = 0;
   }
 
+  // Update last state
   lastButtonState = currentButtonState;
-  delay(10); // Small delay to prevent CPU hogging
+
+  delay(10);
 }
