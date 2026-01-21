@@ -12,7 +12,7 @@
 
 // Hardware configuration
 Display display(128, 32, 21, 22);
-ColorSensor sensor(27, 14, 32, 33, 35, 26);
+ColorSensor sensor(27, 25, 32, 33, 35, 26);
 ColorSampler sampler;
 Button button(13);
 Bluetooth ble;
@@ -20,12 +20,14 @@ Bluetooth ble;
 // Controller
 SamplingController controller(display, sensor, sampler, button, ble);
 
-void setup() {
+void setup()
+{
   Serial.begin(9600);
   delay(1000);
   Serial.println("Starting...");
 
-  if (!display.begin()) {
+  if (!display.begin())
+  {
     for (;;)
       ;
   }
@@ -44,7 +46,8 @@ void setup() {
   Serial.println("Setup complete!");
 }
 
-void loop() {
+void loop()
+{
   controller.update();
   delay(30);
 }

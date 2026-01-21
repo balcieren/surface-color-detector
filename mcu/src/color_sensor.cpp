@@ -126,7 +126,7 @@ String ColorSensor::detectColorName(const RGBColor &color) {
   }
 
   // BLUE
-  if (b > r + 40 && b > g > 40) {
+  if (b > r + 40 && b > g + 40) {
     if (brightness < 80)
       return "DARK BLUE";
     return "BLUE";

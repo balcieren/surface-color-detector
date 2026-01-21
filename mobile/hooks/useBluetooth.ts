@@ -1,26 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  Alert,
-  Linking,
-  NativeEventEmitter,
-  NativeModules,
-  PermissionsAndroid,
-  Platform,
-} from "react-native";
+import { Alert, Linking, PermissionsAndroid, Platform } from "react-native";
+import { Buffer } from "buffer";
 
-// Check if BLE Manager is available
+// Check if BLE library is available
 let BleManager: any = null;
-let BleManagerModule: any = null;
-let bleManagerEmitter: NativeEventEmitter | null = null;
 let isBleAvailable = false;
 
 try {
-  BleManager = require("react-native-ble-manager").default;
-  BleManagerModule = NativeModules.BleManager;
-  bleManagerEmitter = new NativeEventEmitter(BleManagerModule);
+  const blePlx = require("react-native-ble-plx");
+  BleManager = blePlx.BleManager;
   isBleAvailable = true;
 } catch (e) {
-  console.log("BLE Manager not available - running in mock mode");
+  console.log("BLE PLX not available - running in mock mode");
 }
 
 // ESP32 BLE Service and Characteristic UUIDs
@@ -34,12 +25,10 @@ interface RGBColor {
   b: number;
 }
 
-interface Peripheral {
+interface ScannedDevice {
   id: string;
-  name?: string;
-  localName?: string;
-  rssi?: number;
-  advertising?: any;
+  name: string | null;
+  rssi: number | null;
 }
 
 interface BluetoothState {
@@ -47,15 +36,17 @@ interface BluetoothState {
   isConnected: boolean;
   isConnecting: boolean;
   isMockMode: boolean;
-  peripherals: Map<string, Peripheral>;
+  peripherals: Map<string, ScannedDevice>;
   connectedPeripheralId: string | null;
   currentColor: RGBColor | null;
   error: string | null;
 }
 
 export function useBluetooth() {
+  const managerRef = useRef<any>(null);
+  const deviceRef = useRef<any>(null);
+  const subscriptionRef = useRef<any>(null);
   const mockIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const listenersRef = useRef<any[]>([]);
 
   const [state, setState] = useState<BluetoothState>({
     isScanning: false,
@@ -75,45 +66,28 @@ export function useBluetooth() {
       return;
     }
 
-    BleManager.start({ showAlert: false })
-      .then(() => console.log("BleManager started"))
-      .catch((error: any) => {
-        console.error("BleManager start error:", error);
-        setState((prev) => ({ ...prev, isMockMode: true }));
-      });
+    // Create BLE Manager instance
+    managerRef.current = new BleManager();
 
-    // Set up event listeners
-    if (bleManagerEmitter) {
-      const listeners = [
-        bleManagerEmitter.addListener(
-          "BleManagerDiscoverPeripheral",
-          handleDiscoverPeripheral
-        ),
-        bleManagerEmitter.addListener("BleManagerStopScan", handleStopScan),
-        bleManagerEmitter.addListener(
-          "BleManagerConnectPeripheral",
-          handleConnectPeripheral
-        ),
-        bleManagerEmitter.addListener(
-          "BleManagerDisconnectPeripheral",
-          handleDisconnectPeripheral
-        ),
-        bleManagerEmitter.addListener(
-          "BleManagerDidUpdateValueForCharacteristic",
-          handleUpdateValue
-        ),
-      ];
-      listenersRef.current = listeners;
-    }
-
-    // Request permissions on Android
-    if (Platform.OS === "android") {
-      requestAndroidPermissions();
-    }
+    // Listen for state changes
+    const stateSubscription = managerRef.current.onStateChange(
+      (bleState: string) => {
+        console.log("BLE State:", bleState);
+        if (bleState === "PoweredOff") {
+          setState((prev) => ({
+            ...prev,
+            error: "Bluetooth is turned off",
+            isConnected: false,
+          }));
+        }
+      },
+      true
+    );
 
     return () => {
-      // Clean up listeners
-      listenersRef.current.forEach((listener) => listener.remove());
+      stateSubscription?.remove();
+      subscriptionRef.current?.remove();
+      managerRef.current?.destroy();
       if (mockIntervalRef.current) {
         clearInterval(mockIntervalRef.current);
       }
@@ -121,85 +95,31 @@ export function useBluetooth() {
   }, []);
 
   // Request Android permissions
-  const requestAndroidPermissions = async () => {
+  const requestAndroidPermissions = async (): Promise<boolean> => {
     if (Platform.OS !== "android") return true;
 
     const apiLevel = Platform.Version;
 
-    if (apiLevel >= 31) {
-      const result = await PermissionsAndroid.requestMultiple([
-        PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
-        PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT,
-        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-      ]);
+    try {
+      if (apiLevel >= 31) {
+        const result = await PermissionsAndroid.requestMultiple([
+          PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
+          PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT,
+          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+        ]);
 
-      return Object.values(result).every(
-        (status) => status === PermissionsAndroid.RESULTS.GRANTED
-      );
-    } else {
-      const result = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
-      );
-      return result === PermissionsAndroid.RESULTS.GRANTED;
-    }
-  };
-
-  // Handle discovered peripheral
-  const handleDiscoverPeripheral = (peripheral: Peripheral) => {
-    if (!peripheral.name) {
-      peripheral.name = "Unknown Device";
-    }
-
-    setState((prev) => {
-      const newPeripherals = new Map(prev.peripherals);
-      newPeripherals.set(peripheral.id, peripheral);
-      return { ...prev, peripherals: newPeripherals };
-    });
-
-    // Auto-connect if it's our device
-    if (
-      peripheral.name === DEVICE_NAME ||
-      peripheral.localName === DEVICE_NAME
-    ) {
-      BleManager?.stopScan();
-      connectToPeripheral(peripheral.id);
-    }
-  };
-
-  // Handle scan stop
-  const handleStopScan = () => {
-    setState((prev) => ({ ...prev, isScanning: false }));
-  };
-
-  // Handle connect
-  const handleConnectPeripheral = (data: { peripheral: string }) => {
-    console.log("Connected to:", data.peripheral);
-  };
-
-  // Handle disconnect
-  const handleDisconnectPeripheral = (data: { peripheral: string }) => {
-    console.log("Disconnected from:", data.peripheral);
-    setState((prev) => ({
-      ...prev,
-      isConnected: false,
-      connectedPeripheralId: null,
-      currentColor: null,
-      error: "Device disconnected",
-    }));
-  };
-
-  // Handle characteristic update (color data)
-  const handleUpdateValue = (data: {
-    peripheral: string;
-    characteristic: string;
-    value: number[];
-  }) => {
-    // Convert byte array to string
-    const colorString = String.fromCharCode(...data.value);
-    const color = parseColorData(colorString);
-
-    if (color) {
-      setState((prev) => ({ ...prev, currentColor: color }));
+        return Object.values(result).every(
+          (status) => status === PermissionsAndroid.RESULTS.GRANTED
+        );
+      } else {
+        const result = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
+        );
+        return result === PermissionsAndroid.RESULTS.GRANTED;
+      }
+    } catch (error) {
+      console.error("Permission error:", error);
+      return false;
     }
   };
 
@@ -228,21 +148,30 @@ export function useBluetooth() {
       }
 
       if (
-        !isNaN(r) &&
-        !isNaN(g) &&
-        !isNaN(b) &&
-        r >= 0 &&
-        r <= 255 &&
-        g >= 0 &&
-        g <= 255 &&
-        b >= 0 &&
-        b <= 255
+        !isNaN(r!) &&
+        !isNaN(g!) &&
+        !isNaN(b!) &&
+        r! >= 0 &&
+        r! <= 255 &&
+        g! >= 0 &&
+        g! <= 255 &&
+        b! >= 0 &&
+        b! <= 255
       ) {
-        return { r, g, b };
+        return { r: r!, g: g!, b: b! };
       }
       return null;
     } catch {
       return null;
+    }
+  };
+
+  // Decode base64 to string
+  const decodeBase64 = (base64: string): string => {
+    try {
+      return Buffer.from(base64, "base64").toString("utf-8");
+    } catch {
+      return "";
     }
   };
 
@@ -270,10 +199,8 @@ export function useBluetooth() {
     }, 2000);
   };
 
-  // Connect to peripheral
-  const connectToPeripheral = async (peripheralId: string) => {
-    if (!BleManager) return;
-
+  // Connect to device and start monitoring
+  const connectToDevice = async (device: any) => {
     try {
       setState((prev) => ({
         ...prev,
@@ -281,27 +208,52 @@ export function useBluetooth() {
         error: null,
       }));
 
-      await BleManager.connect(peripheralId);
+      // Connect to device
+      const connectedDevice = await device.connect();
+      deviceRef.current = connectedDevice;
 
-      // Wait for bonding
-      await new Promise((resolve) => setTimeout(resolve, 900));
+      // Discover services and characteristics
+      await connectedDevice.discoverAllServicesAndCharacteristics();
 
-      // Retrieve services
-      const peripheralData = await BleManager.retrieveServices(peripheralId);
-      console.log("Peripheral services:", peripheralData);
+      // Setup disconnect listener
+      connectedDevice.onDisconnected((error: any, disconnectedDevice: any) => {
+        console.log("Device disconnected:", disconnectedDevice?.id);
+        subscriptionRef.current?.remove();
+        setState((prev) => ({
+          ...prev,
+          isConnected: false,
+          connectedPeripheralId: null,
+          currentColor: null,
+          error: error ? "Device disconnected unexpectedly" : null,
+        }));
+      });
 
-      // Start notification for color updates
-      await BleManager.startNotification(
-        peripheralId,
+      // Start monitoring characteristic for color updates
+      subscriptionRef.current = connectedDevice.monitorCharacteristicForService(
         SERVICE_UUID,
-        CHARACTERISTIC_UUID
+        CHARACTERISTIC_UUID,
+        (error: any, characteristic: any) => {
+          if (error) {
+            console.error("Monitor error:", error);
+            return;
+          }
+
+          if (characteristic?.value) {
+            const decodedData = decodeBase64(characteristic.value);
+            const color = parseColorData(decodedData);
+
+            if (color) {
+              setState((prev) => ({ ...prev, currentColor: color }));
+            }
+          }
+        }
       );
 
       setState((prev) => ({
         ...prev,
         isConnecting: false,
         isConnected: true,
-        connectedPeripheralId: peripheralId,
+        connectedPeripheralId: connectedDevice.id,
         error: null,
       }));
     } catch (error: any) {
@@ -318,7 +270,7 @@ export function useBluetooth() {
   // Scan for devices
   const scan = useCallback(async () => {
     // Mock mode
-    if (state.isMockMode || !BleManager) {
+    if (state.isMockMode || !managerRef.current) {
       setState((prev) => ({
         ...prev,
         isScanning: true,
@@ -340,61 +292,109 @@ export function useBluetooth() {
       return;
     }
 
-    // Check Bluetooth state
-    try {
-      const btState = await BleManager.checkState();
+    // Request permissions on Android
+    if (Platform.OS === "android") {
+      const hasPermissions = await requestAndroidPermissions();
+      if (!hasPermissions) {
+        setState((prev) => ({
+          ...prev,
+          error: "Bluetooth permissions not granted",
+        }));
+        return;
+      }
+    }
 
-      if (btState === "off") {
-        if (Platform.OS === "ios") {
-          Alert.alert(
-            "Enable Bluetooth",
-            "Please enable Bluetooth in Settings to continue.",
-            [
-              { text: "Cancel", style: "cancel" },
-              {
-                text: "Open Settings",
-                onPress: () => Linking.openURL("App-Prefs:Bluetooth"),
-              },
-            ]
-          );
+    // Check Bluetooth state
+    const bleState = await managerRef.current.state();
+
+    if (bleState === "PoweredOff") {
+      if (Platform.OS === "ios") {
+        Alert.alert(
+          "Enable Bluetooth",
+          "Please enable Bluetooth in Settings to continue.",
+          [
+            { text: "Cancel", style: "cancel" },
+            {
+              text: "Open Settings",
+              onPress: () => Linking.openURL("App-Prefs:Bluetooth"),
+            },
+          ]
+        );
+        return;
+      } else {
+        // Android - try to enable
+        try {
+          await managerRef.current.enable();
+        } catch {
+          setState((prev) => ({
+            ...prev,
+            error: "Please enable Bluetooth",
+          }));
           return;
-        } else {
-          await BleManager.enableBluetooth();
         }
       }
-
-      // Clear previous peripherals and start scan
-      setState((prev) => ({
-        ...prev,
-        peripherals: new Map(),
-        isScanning: true,
-        error: null,
-      }));
-
-      await BleManager.scan([SERVICE_UUID], 10, true);
-
-      // Stop scan after 10 seconds if not connected
-      setTimeout(() => {
-        BleManager.stopScan();
-        setState((prev) => {
-          if (prev.isScanning && !prev.isConnected) {
-            return {
-              ...prev,
-              isScanning: false,
-              error: "Device not found. Make sure ESP32 is powered on.",
-            };
-          }
-          return prev;
-        });
-      }, 10000);
-    } catch (error: any) {
-      console.error("Scan error:", error);
-      setState((prev) => ({
-        ...prev,
-        isScanning: false,
-        error: error?.message || "Failed to scan",
-      }));
     }
+
+    // Clear previous peripherals and start scan
+    setState((prev) => ({
+      ...prev,
+      peripherals: new Map(),
+      isScanning: true,
+      error: null,
+    }));
+
+    // Set timeout to stop scan
+    const scanTimeout = setTimeout(() => {
+      managerRef.current?.stopDeviceScan();
+      setState((prev) => {
+        if (prev.isScanning && !prev.isConnected) {
+          return {
+            ...prev,
+            isScanning: false,
+            error: "Device not found. Make sure ESP32 is powered on.",
+          };
+        }
+        return prev;
+      });
+    }, 10000);
+
+    // Start scanning
+    managerRef.current.startDeviceScan(
+      [SERVICE_UUID],
+      { allowDuplicates: false },
+      (error: any, device: any) => {
+        if (error) {
+          console.error("Scan error:", error);
+          clearTimeout(scanTimeout);
+          setState((prev) => ({
+            ...prev,
+            isScanning: false,
+            error: error.message || "Scan failed",
+          }));
+          return;
+        }
+
+        if (device) {
+          // Add to peripherals list
+          setState((prev) => {
+            const newPeripherals = new Map(prev.peripherals);
+            newPeripherals.set(device.id, {
+              id: device.id,
+              name: device.name || device.localName || "Unknown Device",
+              rssi: device.rssi,
+            });
+            return { ...prev, peripherals: newPeripherals };
+          });
+
+          // Auto-connect if it's our device
+          if (device.name === DEVICE_NAME || device.localName === DEVICE_NAME) {
+            clearTimeout(scanTimeout);
+            managerRef.current.stopDeviceScan();
+            connectToDevice(device);
+          }
+        }
+      }
+    );
   }, [state.isMockMode]);
 
   // Disconnect
@@ -405,12 +405,18 @@ export function useBluetooth() {
       mockIntervalRef.current = null;
     }
 
-    if (state.connectedPeripheralId && BleManager) {
+    // Remove subscription
+    subscriptionRef.current?.remove();
+    subscriptionRef.current = null;
+
+    // Disconnect device
+    if (deviceRef.current) {
       try {
-        await BleManager.disconnect(state.connectedPeripheralId);
+        await deviceRef.current.cancelConnection();
       } catch (error) {
         console.error("Disconnect error:", error);
       }
+      deviceRef.current = null;
     }
 
     setState((prev) => ({
@@ -421,7 +427,7 @@ export function useBluetooth() {
       peripherals: new Map(),
       error: null,
     }));
-  }, [state.connectedPeripheralId]);
+  }, []);
 
   // Clear error
   const clearError = useCallback(() => {

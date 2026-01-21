@@ -14,22 +14,29 @@ void Display::prepareDisplay() {
 }
 
 bool Display::begin() {
+  delay(100);
   Wire.begin(sdaPin, sclPin);
   Serial.println("Initializing OLED...");
 
-  if (!oled.begin(SSD1306_SWITCHCAPVCC, i2cAddress)) {
-    Serial.println(F("SSD1306 allocation failed!"));
-    Serial.println(F("Check connections:"));
-    Serial.print(F("  VCC -> 3.3V, GND -> GND"));
-    Serial.print(F("  SDA -> GPIO "));
-    Serial.print(sdaPin);
-    Serial.print(F(", SCL -> GPIO "));
-    Serial.println(sclPin);
-    return false;
+  for (int attempt = 1; attempt <= 3; attempt++) {
+    if (oled.begin(SSD1306_SWITCHCAPVCC, i2cAddress)) {
+      Serial.println("OLED initialized successfully!");
+      return true;
+    }
+    Serial.print("OLED init attempt ");
+    Serial.print(attempt);
+    Serial.println(" failed, retrying...");
+    delay(200);
   }
 
-  Serial.println("OLED initialized successfully!");
-  return true;
+  Serial.println(F("SSD1306 allocation failed after 3 attempts!"));
+  Serial.println(F("Check connections:"));
+  Serial.print(F("  VCC -> 3.3V, GND -> GND"));
+  Serial.print(F("  SDA -> GPIO "));
+  Serial.print(sdaPin);
+  Serial.print(F(", SCL -> GPIO "));
+  Serial.println(sclPin);
+  return false;
 }
 
 void Display::showSplash() {

@@ -28,8 +28,12 @@
       "permissions": [
         "android.permission.BLUETOOTH",
         "android.permission.BLUETOOTH_ADMIN",
+        "android.permission.BLUETOOTH_CONNECT",
+        "android.permission.BLUETOOTH",
+        "android.permission.BLUETOOTH_ADMIN",
         "android.permission.BLUETOOTH_CONNECT"
-      ]
+      ],
+      "package": "com.anonymous.surfacecolordetector"
     },
     "web": {
       "output": "static",
@@ -38,10 +42,12 @@
     "plugins": [
       "expo-router",
       [
-        "react-native-ble-manager",
+        "react-native-ble-plx",
         {
           "isBackgroundEnabled": true,
-          "neverForLocation": true,
+          "modes": [
+            "central"
+          ],
           "bluetoothAlwaysPermission": "This app uses Bluetooth to connect to your ESP32 color sensor"
         }
       ],
