@@ -207,7 +207,7 @@ export default function ListDetailScreen() {
                 variant="caption"
                 style={{ marginTop: 8, textAlign: "center" }}
               >
-                Connect to your ESP32 and start scanning colors
+                Connect to your device and start scanning colors
               </Text>
             </CardContent>
           </Card>

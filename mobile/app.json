@@ -48,7 +48,7 @@
           "modes": [
             "central"
           ],
-          "bluetoothAlwaysPermission": "This app uses Bluetooth to connect to your ESP32 color sensor"
+          "bluetoothAlwaysPermission": "This app uses Bluetooth to connect to your surface color sensor"
         }
       ],
       [

@@ -89,6 +89,7 @@ void SamplingController::onLongPress() {
   }
 
   Serial.println("Press button to continue...");
+  // display.showMessage("Sent to App!", "Press to reset");
 
   // Wait for button press (result stays on screen)
   while (!button.isPressed()) {

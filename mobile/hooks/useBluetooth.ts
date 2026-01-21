@@ -351,7 +351,7 @@ export function useBluetooth() {
           return {
             ...prev,
             isScanning: false,
-            error: "Device not found. Make sure ESP32 is powered on.",
+            error: "Device not found. Make sure device is powered on.",
           };
         }
         return prev;

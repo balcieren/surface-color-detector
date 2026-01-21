@@ -112,7 +112,7 @@ export default function ScannerScreen() {
             <Text variant="title" style={{ marginBottom: 4 }}>
               Color Scanner
             </Text>
-            <Text variant="caption">Connect to ESP32 to scan colors</Text>
+            <Text variant="caption">Connect to device to scan colors</Text>
           </View>
           <ModeToggle />
         </View>
@@ -147,12 +147,12 @@ export default function ScannerScreen() {
                     {isConnected
                       ? isMockMode
                         ? "Demo - Random colors"
-                        : "ESP32 Color Sensor"
+                        : "Surface Color Sensor"
                       : isConnecting
-                      ? "Connecting..."
-                      : isScanning
-                      ? "Scanning..."
-                      : "Tap to connect"}
+                        ? "Connecting..."
+                        : isScanning
+                          ? "Scanning..."
+                          : "Tap to connect"}
                   </Text>
                 </View>
               </View>
