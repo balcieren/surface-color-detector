@@ -2,16 +2,19 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Alert, Linking, PermissionsAndroid, Platform } from "react-native";
 import { Buffer } from "buffer";
 
-// Check if BLE library is available
+// Check if BLE library is available (not on web)
 let BleManager: any = null;
 let isBleAvailable = false;
 
-try {
-  const blePlx = require("react-native-ble-plx");
-  BleManager = blePlx.BleManager;
-  isBleAvailable = true;
-} catch (e) {
-  console.log("BLE PLX not available - running in mock mode");
+// BLE is only available on native platforms
+if (Platform.OS !== "web") {
+  try {
+    const blePlx = require("react-native-ble-plx");
+    BleManager = blePlx.BleManager;
+    isBleAvailable = true;
+  } catch (e) {
+    console.log("BLE PLX not available - running in mock mode");
+  }
 }
 
 // ESP32 BLE Service and Characteristic UUIDs
@@ -66,8 +69,14 @@ export function useBluetooth() {
       return;
     }
 
-    // Create BLE Manager instance
-    managerRef.current = new BleManager();
+    // Create BLE Manager instance (may fail in Expo Go)
+    try {
+      managerRef.current = new BleManager();
+    } catch (e) {
+      console.log("BLE Manager creation failed - running in mock mode", e);
+      setState((prev) => ({ ...prev, isMockMode: true }));
+      return;
+    }
 
     // Listen for state changes
     const stateSubscription = managerRef.current.onStateChange(
