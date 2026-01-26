@@ -135,6 +135,67 @@ Standard USB port provides 500 mA, so there's plenty of headroom.
 
 ---
 
+## Frequency Measurements
+
+Oscilloscope captures showing TCS3200 frequency output for different surface colors:
+
+### Black Surface
+![Black - 1.48 kHz](./freq/black.png)
+
+**Measured Frequency:** 1.48 kHz | Duty: 49.92%
+
+---
+
+### White Surface
+![White - 11.53 kHz](./freq/white.png)
+
+**Measured Frequency:** 11.53 kHz | Duty: 50.20%
+
+---
+
+### Blue Surface
+![Blue - 3.54 kHz](./freq/blue.png)
+
+**Measured Frequency:** 3.54 kHz | Duty: 50.52%
+
+---
+
+### Green Surface
+![Green - 4.83 kHz](./freq/green.png)
+
+**Measured Frequency:** 4.83 kHz | Duty: 49.41%
+
+---
+
+### Yellow Surface
+![Yellow - 13.24 kHz](./freq/yellow.png)
+
+**Measured Frequency:** 13.24 kHz | Duty: 49.95%
+
+---
+
+### Pink Surface
+![Pink - 10.14 kHz](./freq/pink.png)
+
+**Measured Frequency:** 10.14 kHz | Duty: 49.22%
+
+---
+
+### Summary Table
+
+| Color | Frequency | Time Base | Notes |
+|-------|-----------|-----------|-------|
+| Black | 1.48 kHz | 200 µs | Lowest frequency (absorbs light) |
+| Blue | 3.54 kHz | 100 µs | Low-mid range |
+| Green | 4.83 kHz | 100 µs | Mid range |
+| Pink | 10.14 kHz | 50 µs | High range |
+| White | 11.53 kHz | 20 µs | High frequency (reflects light) |
+| Yellow | 13.24 kHz | 20 µs | Highest frequency |
+
+> **Note:** Higher frequency = more light reflected. Black absorbs most light (lowest freq), while white/yellow reflect most (highest freq).
+
+---
+
 ## References
 
 - [TCS3200 Datasheet](https://www.mouser.com/datasheet/2/588/tcs3200-e11-1107677.pdf)
