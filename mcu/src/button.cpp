@@ -1,14 +1,17 @@
 #include "button.h"
 
 Button::Button(uint8_t buttonPin)
-    : pin(buttonPin), pressStartTime(0), lastDebounceTime(0),
-      wasPressedBefore(false), lastStableState(false), tapCount(0),
-      lastTapTime(0) {}
+    : pin(buttonPin), pressStartTime(0), lastDebounceTime(0), lastTapTime(0),
+      tapCount(0), wasPressedBefore(false), lastStableState(false) {}
 
 void Button::begin() {
   pinMode(pin, INPUT_PULLUP);
   lastStableState = digitalRead(pin) == LOW;
 }
+
+// ============================================================================
+// Core State
+// ============================================================================
 
 bool Button::isPressed() {
   bool reading = digitalRead(pin) == LOW;
@@ -35,8 +38,7 @@ bool Button::isPressedFor(unsigned long durationMs) {
   }
 
   if (currentlyPressed && wasPressedBefore) {
-    unsigned long duration = millis() - pressStartTime;
-    return duration >= durationMs;
+    return (millis() - pressStartTime) >= durationMs;
   }
 
   if (!currentlyPressed) {
@@ -54,6 +56,10 @@ unsigned long Button::getPressedDuration() {
   return 0;
 }
 
+// ============================================================================
+// Edge Detection
+// ============================================================================
+
 bool Button::wasJustPressed() {
   static bool lastState = false;
   bool currentState = isPressed();
@@ -70,19 +76,19 @@ bool Button::wasJustReleased() {
   return justReleased;
 }
 
+// ============================================================================
+// Multi-Tap Detection
+// ============================================================================
+
 void Button::updateTapCount() {
   static bool wasPressed = false;
   bool currentlyPressed = isPressed();
 
-  // Reset tap count if timeout exceeded
-  if (tapCount > 0 && millis() - lastTapTime > TAP_TIMEOUT) {
-    // Keep the tap count for reading, will be reset after being read
-  }
-
   // Detect button release (end of tap)
   if (wasPressed && !currentlyPressed) {
-    // Only count if press was short (not a long press)
-    if (millis() - pressStartTime < 500) {
+    // Only count short presses as taps
+    unsigned long pressDuration = millis() - pressStartTime;
+    if (pressDuration < SHORT_PRESS_MAX) {
       tapCount++;
       lastTapTime = millis();
     }
@@ -93,7 +99,8 @@ void Button::updateTapCount() {
 
 int Button::getTapCount() {
   // Return count only after timeout (tapping sequence complete)
-  if (tapCount > 0 && millis() - lastTapTime > TAP_TIMEOUT && !isPressed()) {
+  bool sequenceComplete = (millis() - lastTapTime) > TAP_TIMEOUT;
+  if (tapCount > 0 && sequenceComplete && !isPressed()) {
     return tapCount;
   }
   return 0;
