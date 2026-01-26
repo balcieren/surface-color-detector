@@ -2,7 +2,8 @@
 
 Button::Button(uint8_t buttonPin)
     : pin(buttonPin), pressStartTime(0), lastDebounceTime(0),
-      wasPressedBefore(false), lastStableState(false) {}
+      wasPressedBefore(false), lastStableState(false), tapCount(0),
+      lastTapTime(0) {}
 
 void Button::begin() {
   pinMode(pin, INPUT_PULLUP);
@@ -67,4 +68,38 @@ bool Button::wasJustReleased() {
   bool justReleased = !currentState && lastState;
   lastState = currentState;
   return justReleased;
+}
+
+void Button::updateTapCount() {
+  static bool wasPressed = false;
+  bool currentlyPressed = isPressed();
+
+  // Reset tap count if timeout exceeded
+  if (tapCount > 0 && millis() - lastTapTime > TAP_TIMEOUT) {
+    // Keep the tap count for reading, will be reset after being read
+  }
+
+  // Detect button release (end of tap)
+  if (wasPressed && !currentlyPressed) {
+    // Only count if press was short (not a long press)
+    if (millis() - pressStartTime < 500) {
+      tapCount++;
+      lastTapTime = millis();
+    }
+  }
+
+  wasPressed = currentlyPressed;
+}
+
+int Button::getTapCount() {
+  // Return count only after timeout (tapping sequence complete)
+  if (tapCount > 0 && millis() - lastTapTime > TAP_TIMEOUT && !isPressed()) {
+    return tapCount;
+  }
+  return 0;
+}
+
+void Button::resetTapCount() {
+  tapCount = 0;
+  lastTapTime = 0;
 }

@@ -12,6 +12,11 @@ private:
   bool lastStableState;
   static const unsigned long DEBOUNCE_DELAY = 50;
 
+  // Tap counting
+  int tapCount;
+  unsigned long lastTapTime;
+  static const unsigned long TAP_TIMEOUT = 400; // ms between taps
+
 public:
   Button(uint8_t buttonPin);
   void begin();
@@ -20,6 +25,11 @@ public:
   unsigned long getPressedDuration();
   bool wasJustPressed();
   bool wasJustReleased();
+
+  // New tap detection
+  int getTapCount();
+  void resetTapCount();
+  void updateTapCount();
 };
 
 #endif

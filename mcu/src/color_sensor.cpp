@@ -25,27 +25,50 @@ void ColorSensor::begin() {
 }
 
 void ColorSensor::ensureLedOn() {
-  // LED is already on from begin(), no need to toggle
+  // Check if LED is on and turn it on if needed
+  if (digitalRead(ledPin) != HIGH) {
+    digitalWrite(ledPin, HIGH);
+  }
 }
 
-RGBColor ColorSensor::readColor() {
-  RGBColor color;
+void ColorSensor::toggleLed() {
+  if (digitalRead(ledPin) == HIGH) {
+    digitalWrite(ledPin, LOW);
+  } else {
+    digitalWrite(ledPin, HIGH);
+  }
+}
 
-  // Read raw frequencies once
+void ColorSensor::setLed(bool on) { digitalWrite(ledPin, on ? HIGH : LOW); }
+
+bool ColorSensor::isLedOn() { return digitalRead(ledPin) == HIGH; }
+
+RGBColor ColorSensor::readColor() {
+  RGBColor color = {0, 0, 0};
+
+  // Read raw frequencies with timeout handling
   digitalWrite(s2Pin, LOW);
   digitalWrite(s3Pin, LOW);
   delay(20);
-  int redFreq = pulseIn(outPin, LOW, 100000);
+  unsigned long redFreq = pulseIn(outPin, LOW, 100000);
 
   digitalWrite(s2Pin, HIGH);
   digitalWrite(s3Pin, HIGH);
   delay(20);
-  int greenFreq = pulseIn(outPin, LOW, 100000);
+  unsigned long greenFreq = pulseIn(outPin, LOW, 100000);
 
   digitalWrite(s2Pin, LOW);
   digitalWrite(s3Pin, HIGH);
   delay(20);
-  int blueFreq = pulseIn(outPin, LOW, 100000);
+  unsigned long blueFreq = pulseIn(outPin, LOW, 100000);
+
+  // Timeout handling: if any reading is 0, sensor failed to respond
+  if (redFreq == 0 || greenFreq == 0 || blueFreq == 0) {
+#ifdef DEBUG_SENSOR
+    Serial.println("WARNING: Sensor timeout! Check connections.");
+#endif
+    return color; // Return black (0,0,0) on timeout
+  }
 
   // Debug: Print raw frequencies for calibration
 #ifdef DEBUG_SENSOR
