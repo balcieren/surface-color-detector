@@ -60,7 +60,8 @@ void Display::showWelcome() {
   oled.display();
 }
 
-void Display::showColorData(int red, int green, int blue, String colorName) {
+void Display::showColorData(int red, int green, int blue,
+                            const String &colorName) {
   prepareDisplay();
 
   // Title
@@ -84,7 +85,7 @@ void Display::showColorData(int red, int green, int blue, String colorName) {
 }
 
 void Display::showSamplingMode(int sampleCount, int red, int green, int blue,
-                               String colorName) {
+                               const String &colorName) {
   prepareDisplay();
 
   // Sampling indicator with count
@@ -131,7 +132,7 @@ void Display::showProgress(int percentage) {
   oled.display();
 }
 
-void Display::showMessage(String line1, String line2) {
+void Display::showMessage(const String &line1, const String &line2) {
   prepareDisplay();
 
   oled.setCursor(0, 8);

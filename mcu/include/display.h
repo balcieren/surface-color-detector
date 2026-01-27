@@ -22,11 +22,11 @@ public:
   bool begin();
   void showSplash();
   void showWelcome();
-  void showColorData(int red, int green, int blue, String colorName);
+  void showColorData(int red, int green, int blue, const String &colorName);
   void showSamplingMode(int sampleCount, int red, int green, int blue,
-                        String colorName);
+                        const String &colorName);
   void showProgress(int percentage);
-  void showMessage(String line1, String line2 = "");
+  void showMessage(const String &line1, const String &line2 = "");
 };
 
 #endif
