@@ -461,11 +461,29 @@ The Surface Color Detector consists of four main subsystems interconnected throu
 
 \begin{figure}[H]
     \centering
-    \begin{tikzpicture}
-        \draw[thick, dashed] (0,0) rectangle (10,5);
-        \node[align=center] at (5,2.5) {\textbf{[IMAGE PLACEHOLDER]}\\[0.3cm]System Photograph};
-    \end{tikzpicture}
-    \caption{Photograph of the assembled Surface Color Detector system}
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{system_photo_1.jpg}
+        \caption{Front view with OLED display}
+        \label{fig:system_photo_front}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{system_photo_2.jpg}
+        \caption{Side view with button and LEDs}
+        \label{fig:system_photo_side}
+    \end{subfigure}
+
+    \vspace{0.5cm}
+
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{system_photo_3.jpg}
+        \caption{Bottom view with TCS3200 sensor and ESP32}
+        \label{fig:system_photo_sensor}
+    \end{subfigure}
+    \caption{Photographs of the assembled Surface Color Detector system}
     \label{fig:system_photo}
 \end{figure}
 
