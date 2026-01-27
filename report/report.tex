@@ -26,7 +26,8 @@
 \usepackage{amssymb}
 \usepackage{listings}
 \usepackage{xcolor}
-\usepackage{hyperref}
+\usepackage[breaklinks=true]{hyperref}
+\usepackage{xurl}                      % Better URL line breaking
 \usepackage{fancyhdr}
 \usepackage{titlesec}
 \usepackage{caption}
@@ -53,24 +54,38 @@
 % Chapter: 18pt bold, starts on new page
 \titleformat{\chapter}[display]
     {\normalfont\bfseries\fontsize{18pt}{22pt}\selectfont}
-    {\chaptertitlename\ \thechapter}{20pt}{\fontsize{18pt}{22pt}\selectfont}
-\titlespacing*{\chapter}{0pt}{0pt}{20pt}
+    {\chaptertitlename\ \thechapter}{12pt}{\fontsize{18pt}{22pt}\selectfont}
+\titlespacing*{\chapter}{0pt}{0pt}{15pt}
 
 % Section: 16pt bold
 \titleformat{\section}
     {\normalfont\bfseries\fontsize{16pt}{20pt}\selectfont}
     {\thesection}{1em}{}
+\titlespacing*{\section}{0pt}{12pt}{6pt}
 
-% Subsection: 14pt bold
+% Subsection (Level 3): 14pt bold
 \titleformat{\subsection}
     {\normalfont\bfseries\fontsize{14pt}{18pt}\selectfont}
     {\thesubsection}{1em}{}
+\titlespacing*{\subsection}{0pt}{10pt}{4pt}
+
+% Subsubsection (Level 4): 12pt bold, no numbering
+\titleformat{\subsubsection}
+    {\normalfont\bfseries\fontsize{12pt}{14pt}\selectfont}
+    {}{0em}{}
+\titlespacing*{\subsubsection}{0pt}{8pt}{3pt}
+
+% Paragraph (Level 5): 12pt italic, no numbering
+\titleformat{\paragraph}[runin]
+    {\normalfont\itshape\fontsize{12pt}{14pt}\selectfont}
+    {}{0em}{}
+\titlespacing*{\paragraph}{0pt}{6pt}{1em}
 
 % ============================================================================
 % FIGURE AND TABLE CAPTIONS
 % ============================================================================
-\captionsetup[figure]{font=small, labelfont=bf, position=below, justification=centering}
-\captionsetup[table]{font=small, labelfont=bf, position=above, justification=raggedright, singlelinecheck=false}
+\captionsetup[figure]{font=small, labelfont=bf, position=below, justification=centering, name={Fig.}}
+\captionsetup[table]{font=small, labelfont=bf, position=above, justification=raggedright, singlelinecheck=false, name={Tab.}}
 
 % ============================================================================
 % CODE LISTING STYLE
@@ -135,19 +150,16 @@
 
     \begin{minipage}{0.5\textwidth}
         \begin{flushleft}
-            \textbf{Group:} % TODO: Add group number \\[0.3cm]
+            \textbf{Group number:} [5]\\[0.3cm]
             \textbf{Students:}\\
-            % TODO: Add student names, surnames, and album numbers
-            % Format: Name Surname (Album Number)
-            1. % TODO: Student 1 \\
-            2. % TODO: Student 2 \\
-            3. % TODO: Student 3 \\
+            1. Eren Balcı (283099)\\[0.1cm]
+            2. Paweł Buras (261943)\\[0.1cm]
         \end{flushleft}
     \end{minipage}
 
     \vfill
 
-    {\large Wrocław 2024}
+    {\large Wrocław 2026}
 
 \end{titlepage}
 
@@ -155,6 +167,8 @@
 % TABLE OF CONTENTS
 % ============================================================================
 \tableofcontents
+\listoffigures
+\listoftables
 \newpage
 
 % ============================================================================
@@ -176,6 +190,11 @@ The primary objectives of this project are:
 \end{itemize}
 
 This report is structured as follows: Chapter 2 provides the theoretical background on color sensing and optoelectronics. Chapter 3 outlines the functional and design assumptions. Chapter 4 describes the hardware architecture. Chapter 5 details the software implementation. Chapter 6 covers the calibration process. Chapter 7 presents the test measurements and results. Chapter 8 provides a standalone user manual. Finally, Chapter 9 summarizes the project outcomes and future development possibilities.
+
+The complete source code and documentation are available on GitHub:
+\begin{center}
+    \url{https://github.com/balcieren/surface-color-detector}
+\end{center}
 
 % ============================================================================
 % CHAPTER 2: THEORETICAL INTRODUCTION
@@ -222,9 +241,8 @@ The sensor contains an 8×8 array of 64 photodiodes organized as:
 
 \begin{figure}[H]
     \centering
-    % TODO: Add TCS3200 block diagram image
-    % \includegraphics[width=0.8\textwidth]{images/tcs3200_block.png}
-    \caption{TCS3200 functional block diagram showing the photodiode array and current-to-frequency converter}
+    \includegraphics[width=0.7\textwidth]{TCS3200_diagram.png}
+    \caption{TCS3200 functional block diagram showing the photodiode array and current-to-frequency converter \cite{amsosram}}
     \label{fig:tcs3200_block}
 \end{figure}
 
@@ -256,8 +274,11 @@ The output frequency can be scaled using pins S0 and S1:
         \textbf{S0} & \textbf{S1} & \textbf{Output Frequency Scaling} \\
         \hline
         LOW & LOW & Power down \\
+        \hline
         LOW & HIGH & 2\% \\
+        \hline
         HIGH & LOW & 20\% \\
+        \hline
         HIGH & HIGH & 100\% \\
         \hline
     \end{tabular}
@@ -276,8 +297,11 @@ The photodiode type is selected using pins S2 and S3:
         \textbf{S2} & \textbf{S3} & \textbf{Active Photodiodes} \\
         \hline
         LOW & LOW & Red \\
+        \hline
         LOW & HIGH & Blue \\
+        \hline
         HIGH & LOW & Clear (no filter) \\
+        \hline
         HIGH & HIGH & Green \\
         \hline
     \end{tabular}
@@ -392,6 +416,8 @@ The Surface Color Detector consists of four main subsystems interconnected throu
 \begin{figure}[H]
     \centering
     \begin{tikzpicture}[
+        scale=0.9,
+        transform shape,
         block/.style={rectangle, draw, minimum width=3cm, minimum height=1.2cm, align=center},
         arrow/.style={->, >=stealth, thick}
     ]
@@ -435,19 +461,28 @@ The Surface Color Detector consists of four main subsystems interconnected throu
 
 \begin{figure}[H]
     \centering
-    % TODO: Add photo of the actual assembled system
-    % \includegraphics[width=0.8\textwidth]{images/system_photo.jpg}
+    \begin{tikzpicture}
+        \draw[thick, dashed] (0,0) rectangle (10,5);
+        \node[align=center] at (5,2.5) {\textbf{[IMAGE PLACEHOLDER]}\\[0.3cm]System Photograph};
+    \end{tikzpicture}
     \caption{Photograph of the assembled Surface Color Detector system}
     \label{fig:system_photo}
 \end{figure}
 
-% TODO: Add description of physical components visible in photo
+The system consists of the following visible components:
+\begin{itemize}
+    \item ESP32-DevKitC development board (central controller)
+    \item TCS3200 color sensor module with integrated LED array
+    \item SSD1306 OLED display (128×32 pixels)
+    \item Push button for user input
+    \item Prototype board and connecting wires
+\end{itemize}
 
 \section{Electrical Schematic}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\textwidth]{circuit_image.png}
+    \includegraphics[width=0.85\textwidth]{circuit_image.png}
     \caption{Complete electrical schematic diagram of the Surface Color Detector}
     \label{fig:schematic}
 \end{figure}
@@ -463,12 +498,19 @@ The Surface Color Detector consists of four main subsystems interconnected throu
         \textbf{TCS3200 Pin} & \textbf{ESP32 GPIO} & \textbf{Function} \\
         \hline
         S0 & GPIO27 & Frequency scaling (HIGH) \\
+        \hline
         S1 & GPIO25 & Frequency scaling (LOW = 20\%) \\
+        \hline
         S2 & GPIO32 & Color filter select \\
+        \hline
         S3 & GPIO33 & Color filter select \\
+        \hline
         OUT & GPIO35 & Frequency output (input-only) \\
+        \hline
         LED & GPIO26 & LED array control \\
+        \hline
         VCC & VIN & 5V power supply \\
+        \hline
         GND & GND & Ground \\
         \hline
     \end{tabular}
@@ -483,8 +525,11 @@ The Surface Color Detector consists of four main subsystems interconnected throu
         \textbf{OLED Pin} & \textbf{ESP32 GPIO} & \textbf{Function} \\
         \hline
         SDA & GPIO21 & I2C data \\
+        \hline
         SCL & GPIO22 & I2C clock \\
+        \hline
         VCC & VIN & 5V power \\
+        \hline
         GND & GND & Ground \\
         \hline
     \end{tabular}
@@ -499,6 +544,7 @@ The Surface Color Detector consists of four main subsystems interconnected throu
         \textbf{Button Pin} & \textbf{ESP32 GPIO} & \textbf{Function} \\
         \hline
         Signal & GPIO13 & Button input (internal pull-up) \\
+        \hline
         GND & GND & Ground \\
         \hline
     \end{tabular}
@@ -547,7 +593,9 @@ The Surface Color Detector consists of four main subsystems interconnected throu
         \textbf{Component} & \textbf{Current (mA)} & \textbf{Notes} \\
         \hline
         ESP32 (active) & 80 & Including BLE \\
+        \hline
         TCS3200 & 20 & With LED array on \\
+        \hline
         OLED Display & 20 & Typical content \\
         \hline
         \textbf{Total} & \textbf{120} & \\
@@ -596,6 +644,8 @@ The firmware follows an object-oriented modular design with separate classes for
 \begin{figure}[H]
     \centering
     \begin{tikzpicture}[
+        scale=0.85,
+        transform shape,
         node distance=1.5cm,
         start/.style={ellipse, draw, minimum width=2cm},
         process/.style={rectangle, draw, minimum width=4cm, minimum height=0.8cm},
@@ -752,13 +802,17 @@ int Button::getTapCount() {
     \caption{BLE GATT service configuration}
     \label{tab:ble_service}
     \centering
-    \begin{tabular}{|l|l|}
+    \small
+    \begin{tabular}{|l|p{8cm}|}
         \hline
         \textbf{Parameter} & \textbf{Value} \\
         \hline
         Device Name & Surface Color Detector \\
-        Service UUID & 4fafc201-1fb5-459e-8fcc-c5c9c331914b \\
-        Characteristic UUID & beb5483e-36e1-4688-b7f5-ea07361b26a8 \\
+        \hline
+        Service UUID & \texttt{4fafc201-1fb5-459e-8fcc-c5c9c331914b} \\
+        \hline
+        Characteristic UUID & \texttt{beb5483e-36e1-4688-b7f5-ea07361b26a8} \\
+        \hline
         Properties & READ, WRITE, NOTIFY, INDICATE \\
         \hline
     \end{tabular}
@@ -788,9 +842,20 @@ The mobile application is built using React Native with Expo framework, providin
 
 \begin{figure}[H]
     \centering
-    % TODO: Add mobile app screenshot
-    % \includegraphics[width=0.4\textwidth]{images/mobile_app.png}
-    \caption{Mobile application user interface}
+    \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+        \includegraphics[width=0.8\textwidth]{main_screen_1.jpg}
+        \caption{Main screen - color detection}
+        \label{fig:mobile_main}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+        \includegraphics[width=0.8\textwidth]{color_lists.jpg}
+        \caption{Color palettes - saved colors}
+        \label{fig:mobile_palettes}
+    \end{subfigure}
+    \caption{Mobile application user interface screenshots}
     \label{fig:mobile_app}
 \end{figure}
 
@@ -851,7 +916,9 @@ Using oscilloscope measurements, the following calibration values were determine
         \textbf{Channel} & \textbf{White Surface (µs)} & \textbf{Black Surface (µs)} \\
         \hline
         Red & 26 & 155 \\
+        \hline
         Green & 24 & 166 \\
+        \hline
         Blue & 30 & 197 \\
         \hline
     \end{tabular}
@@ -888,42 +955,42 @@ The TCS3200 frequency output was measured using an oscilloscope for various colo
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.7\textwidth]{freq/black.png}
+    \includegraphics[width=0.55\textwidth]{freq/black.png}
     \caption{Frequency output for black surface: 1.48 kHz}
     \label{fig:freq_black}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.7\textwidth]{freq/white.png}
+    \includegraphics[width=0.55\textwidth]{freq/white.png}
     \caption{Frequency output for white surface: 11.53 kHz}
     \label{fig:freq_white}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.7\textwidth]{freq/blue.png}
+    \includegraphics[width=0.55\textwidth]{freq/blue.png}
     \caption{Frequency output for blue surface: 3.54 kHz}
     \label{fig:freq_blue}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.7\textwidth]{freq/green.png}
+    \includegraphics[width=0.55\textwidth]{freq/green.png}
     \caption{Frequency output for green surface: 4.83 kHz}
     \label{fig:freq_green}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.7\textwidth]{freq/yellow.png}
+    \includegraphics[width=0.55\textwidth]{freq/yellow.png}
     \caption{Frequency output for yellow surface: 13.24 kHz}
     \label{fig:freq_yellow}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.7\textwidth]{freq/pink.png}
+    \includegraphics[width=0.55\textwidth]{freq/pink.png}
     \caption{Frequency output for pink surface: 10.14 kHz}
     \label{fig:freq_pink}
 \end{figure}
@@ -939,10 +1006,15 @@ The TCS3200 frequency output was measured using an oscilloscope for various colo
         \textbf{Color} & \textbf{Frequency (kHz)} & \textbf{Duty Cycle (\%)} & \textbf{Notes} \\
         \hline
         Black & 1.48 & 49.92 & Lowest (absorbs light) \\
+        \hline
         Blue & 3.54 & 50.52 & Low-mid range \\
+        \hline
         Green & 4.83 & 49.41 & Mid range \\
+        \hline
         Pink & 10.14 & 49.22 & High range \\
+        \hline
         White & 11.53 & 50.20 & High (reflects light) \\
+        \hline
         Yellow & 13.24 & 49.95 & Highest frequency \\
         \hline
     \end{tabular}
@@ -963,10 +1035,15 @@ The TCS3200 frequency output was measured using an oscilloscope for various colo
         \hline
         % TODO: Fill in actual test results
         White & WHITE & 240 & 238 & 235 & PASS \\
+        \hline
         Black & BLACK & 15 & 12 & 18 & PASS \\
+        \hline
         Red & RED & 210 & 45 & 38 & PASS \\
+        \hline
         Green & GREEN & 42 & 180 & 55 & PASS \\
+        \hline
         Blue & BLUE & 35 & 48 & 195 & PASS \\
+        \hline
         Yellow & YELLOW & 225 & 218 & 45 & PASS \\
         % TODO: Add more test results
         \hline
@@ -984,16 +1061,26 @@ The TCS3200 frequency output was measured using an oscilloscope for various colo
         \textbf{Parameter} & \textbf{Value} \\
         \hline
         Operating voltage & 5V (USB) \\
+        \hline
         Current consumption & 120 mA typical \\
+        \hline
         Measurement time & $<$100 ms per sample \\
+        \hline
         RGB resolution & 8-bit (0-255 per channel) \\
+        \hline
         Detectable colors & 15+ named colors \\
+        \hline
         Communication & Bluetooth Low Energy 4.2 \\
+        \hline
         BLE range & 10-15 m typical \\
+        \hline
         Display & 128×32 OLED \\
+        \hline
         Operating temperature & 0-50°C \\
-        Dimensions & % TODO: Add dimensions \\
-        Weight & % TODO: Add weight \\
+        \hline
+        Dimensions & [TBD] \\
+        \hline
+        Weight & [TBD] \\
         \hline
     \end{tabular}
 \end{table}
@@ -1003,6 +1090,7 @@ The TCS3200 frequency output was measured using an oscilloscope for various colo
 % ============================================================================
 \chapter{User Manual}
 
+% User Manual has independent numbering as per university requirements
 \setcounter{figure}{0}
 \setcounter{table}{0}
 \setcounter{equation}{0}
@@ -1038,8 +1126,11 @@ The sensor LED (on TCS3200) illuminates the target surface. It turns on automati
         \textbf{Action} & \textbf{Function} \\
         \hline
         Short press & Take one color sample \\
+        \hline
         Hold 2 seconds & Finalize measurement, send via BLE \\
+        \hline
         Hold 5 seconds & Toggle LED on/off \\
+        \hline
         Triple tap & Reset all samples \\
         \hline
     \end{tabular}
@@ -1059,7 +1150,10 @@ The sensor LED (on TCS3200) illuminates the target surface. It turns on automati
 
 \begin{figure}[H]
     \centering
-    % TODO: Add measurement procedure diagram or photo
+    \begin{tikzpicture}
+        \draw[thick, dashed] (0,0) rectangle (8,4);
+        \node[align=center] at (4,2) {\textbf{[IMAGE PLACEHOLDER]}\\[0.3cm]Measurement Positioning};
+    \end{tikzpicture}
     \caption{Proper sensor positioning for measurement}
     \label{fig:m_positioning}
 \end{figure}
@@ -1090,14 +1184,18 @@ To conserve power:
     \caption{Common problems and solutions}
     \label{tab:m_troubleshooting}
     \centering
-    \begin{tabular}{|p{4cm}|p{6cm}|}
+    \begin{tabular}{|p{4.5cm}|p{8cm}|}
         \hline
         \textbf{Problem} & \textbf{Solution} \\
         \hline
         Screen is blank & Check USB connection, try different port \\
+        \hline
         Wrong colors detected & Clean sensor, adjust distance, recalibrate \\
+        \hline
         Cannot connect via BLE & Restart app, turn Bluetooth off/on \\
+        \hline
         LED won't turn on & Hold button for 5s to toggle, or restart device \\
+        \hline
         Samples not saving & Wait for full button release between presses \\
         \hline
     \end{tabular}
@@ -1179,7 +1277,7 @@ ams AG, "TCS3200 Programmable Color Light-to-Frequency Converter," Datasheet, 20
 Espressif Systems, "ESP32 Technical Reference Manual," Version 4.6, 2022.
 
 \bibitem{ssd1306}
-Solomon Systech, "SSD1306 128x64 Dot Matrix OLED/PLED Segment/Common Driver with Controller," Datasheet, 2008.
+Solomon Systech, "SSD1306 128x32 Dot Matrix OLED/PLED Segment/Common Driver with Controller," Datasheet, 2008.
 
 \bibitem{ble}
 Bluetooth SIG, "Bluetooth Core Specification Version 4.2," 2014.
@@ -1189,6 +1287,9 @@ R. W. G. Hunt, "The Reproduction of Colour," 6th ed., Wiley, 2004.
 
 \bibitem{photodiodes}
 S. M. Sze, "Physics of Semiconductor Devices," 3rd ed., Wiley, 2006.
+
+\bibitem{amsosram}
+ams-osram, ``TCS3200 Color Sensor,'' Product Page, Available: \\url{https://ams-osram.com/products/sensor-solutions/ambient-light-color-spectral-proximity-sensors/ams-tcs3200-color-sensor}, Accessed: Jan. 2026.
 
 \end{thebibliography}
 
@@ -1202,11 +1303,16 @@ S. M. Sze, "Physics of Semiconductor Devices," 3rd ed., Wiley, 2006.
 % TODO: Add PCB layout images if available
 % If breadboard was used, note: "The prototype was assembled on a breadboard. No custom PCB was designed for this project."
 
-The prototype was assembled on a breadboard for rapid development and testing. Future revisions may include a custom PCB design for improved reliability and reduced form factor.
+The prototype was assembled on a prototype board for rapid development and testing. Future revisions may include a custom PCB design for improved reliability and reduced form factor.
 
 \chapter{Complete Source Code}
 
-The complete source code is available in the project repository. Key files include:
+The complete source code is available in the project GitHub repository:
+\begin{center}
+    \url{https://github.com/balcieren/surface-color-detector}
+\end{center}
+
+Key files include:
 
 \begin{itemize}
     \item \texttt{main.cpp} - Entry point and initialization
