@@ -15,6 +15,7 @@ public:
   void begin();
 
   // Core state
+  void update();
   bool isPressed();
   bool isPressedFor(unsigned long durationMs);
   unsigned long getPressedDuration();
@@ -28,9 +29,12 @@ public:
   int getTapCount();
   void resetTapCount();
 
+  unsigned long getLastPressDuration() { return lastPressDuration; }
+
 private:
   uint8_t pin;
   unsigned long pressStartTime;
+  unsigned long lastPressDuration;
   unsigned long lastDebounceTime;
   unsigned long lastTapTime;
   int tapCount;

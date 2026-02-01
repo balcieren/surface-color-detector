@@ -1,8 +1,9 @@
 #include "button.h"
 
 Button::Button(uint8_t buttonPin)
-    : pin(buttonPin), pressStartTime(0), lastDebounceTime(0), lastTapTime(0),
-      tapCount(0), wasPressedBefore(false), lastStableState(false) {}
+    : pin(buttonPin), pressStartTime(0), lastPressDuration(0),
+      lastDebounceTime(0), lastTapTime(0), tapCount(0), wasPressedBefore(false),
+      lastStableState(false) {}
 
 void Button::begin() {
   pinMode(pin, INPUT_PULLUP);
@@ -12,6 +13,21 @@ void Button::begin() {
 // ============================================================================
 // Core State
 // ============================================================================
+
+void Button::update() {
+  bool currentlyPressed = isPressed();
+
+  if (currentlyPressed && !wasPressedBefore) {
+    // Just pressed
+    pressStartTime = millis();
+    wasPressedBefore = true;
+  } else if (!currentlyPressed && wasPressedBefore) {
+    // Just released
+    lastPressDuration = millis() - pressStartTime;
+    wasPressedBefore = false;
+    pressStartTime = 0;
+  }
+}
 
 bool Button::isPressed() {
   bool reading = digitalRead(pin) == LOW;
@@ -29,23 +45,9 @@ bool Button::isPressed() {
 }
 
 bool Button::isPressedFor(unsigned long durationMs) {
-  bool currentlyPressed = isPressed();
-
-  if (currentlyPressed && !wasPressedBefore) {
-    pressStartTime = millis();
-    wasPressedBefore = true;
-    return false;
-  }
-
-  if (currentlyPressed && wasPressedBefore) {
+  if (isPressed() && wasPressedBefore) {
     return (millis() - pressStartTime) >= durationMs;
   }
-
-  if (!currentlyPressed) {
-    wasPressedBefore = false;
-    pressStartTime = 0;
-  }
-
   return false;
 }
 

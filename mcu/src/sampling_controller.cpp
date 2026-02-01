@@ -214,7 +214,9 @@ void SamplingController::onTripleTap() {
 // ============================================================================
 
 void SamplingController::update() {
-  button.updateTapCount();
+  button.update();
+  button.updateTapCount(); // Keep tap counting logic separate for now, or merge
+                           // later
 
   // Handle triple tap
   int tapCount = button.getTapCount();
@@ -239,56 +241,71 @@ void SamplingController::update() {
   }
 
   bool currentButtonState = button.isPressed();
+  unsigned long duration = 0;
 
   if (currentButtonState) {
+    // BUTTON HOLDING LOGIC
     updateActivity();
+    duration = button.getPressedDuration();
 
-    // Take sample on button press
-    if (!lastButtonState) {
-      RGBColor color = sensor.readColor();
-      onSampleTaken(color);
-    }
-
-    unsigned long duration = button.getPressedDuration();
-
-    // Check for LED toggle (5s)
+    // 1. Check for LED toggle (5s hold) - Trigger IMMEDIATELY
     if (duration >= ledToggleDuration && !ledToggleHandled) {
       Serial.println("5s hold - LED toggle");
       onLedToggle();
       ledToggleHandled = true;
-      longPressHandled = true;
+      longPressHandled = true; // Prevent finalize on release
       return;
     }
 
-    // Show progress feedback
+    // 2. Show progress feedback
     if (duration > PROGRESS_SHOW_DELAY && !longPressHandled &&
         !ledToggleHandled) {
       if (duration < longPressDuration) {
+        // Progress 0-100% for Finalize (2s)
         int progress = min(100, (int)((duration * 100) / longPressDuration));
         display.showProgress(progress);
       } else if (duration < ledToggleDuration) {
+        // Progress for LED Toggle (2s -> 5s)
         int ledProgress =
             min(100, (int)(((duration - longPressDuration) * 100) /
                            (ledToggleDuration - longPressDuration)));
-        display.showMessage("LED Toggle:", String(ledProgress) + "%");
+        display.showMessage("Hold for LED", String(ledProgress) + "%");
       }
     }
 
-    // Check for finalize (2s)
-    if (button.isPressedFor(longPressDuration) && !longPressHandled &&
-        !ledToggleHandled) {
-      Serial.println("2s hold - Finalize");
-      onLongPress();
-      longPressHandled = true;
-    }
-
   } else {
-    // Button released
-    if (lastButtonState && !longPressHandled && !ledToggleHandled) {
-      showCurrentState();
+    // BUTTON RELEASE LOGIC
+    if (lastButtonState) { // Just released
+      duration = button.getLastPressDuration();
+
+      if (ledToggleHandled) {
+        // Already handled LED toggle, just reset flags
+        ledToggleHandled = false;
+        longPressHandled = false;
+        showCurrentState();
+      } else if (duration >= longPressDuration) {
+        // Medium press (2s - 5s): Finalize
+        // Only if we haven't already handled a long press action
+        if (!longPressHandled) {
+          Serial.println("2s release - Finalize");
+          onLongPress();
+        }
+        showCurrentState(); // Return to ready state
+      } else {
+        // Short press (< 2s): Take Sample
+        // Only if it wasn't a very short glitch (< 50ms is handled by debounce,
+        // but safe to check)
+        if (duration > 50) {
+          Serial.println("Short release - Sample");
+          RGBColor color = sensor.readColor();
+          onSampleTaken(color);
+        }
+      }
+
+      // Reset flags for next press
+      longPressHandled = false;
+      ledToggleHandled = false;
     }
-    longPressHandled = false;
-    ledToggleHandled = false;
   }
 
   lastButtonState = currentButtonState;
