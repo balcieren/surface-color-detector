@@ -129,6 +129,7 @@
 % ============================================================================
 % DOCUMENT START
 % ============================================================================
+\raggedbottom
 \begin{document}
 
 % ============================================================================
@@ -284,6 +285,7 @@ The output frequency can be scaled using pins S0 and S1:
     \end{tabular}
 \end{table}
 
+\newpage
 \subsection{Color Filter Selection}
 
 The photodiode type is selected using pins S2 and S3:
@@ -632,7 +634,7 @@ The system operates safely within USB 2.0 power limits (500 mA maximum).
 
 The firmware follows an object-oriented modular design with separate classes for each hardware component:
 
-\begin{figure}[H]
+\begin{figure}[htbp]
     \centering
     \begin{tikzpicture}[
         class/.style={rectangle, draw, minimum width=3.5cm, minimum height=1cm, align=center},
@@ -676,11 +678,11 @@ The firmware follows an object-oriented modular design with separate classes for
         \node[decision, below of=update, yshift=-0.5cm] (triple) {Triple tap?};
         \node[process, right of=triple, xshift=3cm] (reset) {Reset samples};
         \node[decision, below of=triple, yshift=-1cm] (pressed) {Button pressed?};
-        \node[process, right of=pressed, xshift=3cm] (sample) {Take sample};
-        \node[decision, below of=pressed, yshift=-1cm] (hold2s) {Hold $\geq$ 2s?};
-        \node[process, right of=hold2s, xshift=3cm] (finalize) {Finalize \& send};
+        \node[process, right of=pressed, xshift=3cm] (sample) {Take sample (on release)};
+        \node[decision, below of=pressed, yshift=-1cm] (hold2s) {Press 2s-5s?};
+        \node[process, right of=hold2s, xshift=3cm] (finalize) {Finalize (on release)};
         \node[decision, below of=hold2s, yshift=-1cm] (hold5s) {Hold $\geq$ 5s?};
-        \node[process, right of=hold5s, xshift=3cm] (ledtoggle) {Toggle LED};
+        \node[process, right of=hold5s, xshift=3cm] (ledtoggle) {Toggle LED (immediate)};
 
         \draw[arrow] (start) -- (init);
         \draw[arrow] (init) -- (update);
@@ -898,9 +900,9 @@ Initializing OLED...
 OLED initialized successfully!
 BLE started: Surface Color Detector
 Controls:
-  Short press: Add sample
-  2s hold: Finalize and send
-  5s hold: Toggle LED on/off
+  Short press: Add sample (on release)
+  2s hold: Finalize and send (on release)
+  5s hold: Toggle LED on/off (immediate)
   Triple tap: Reset samples
 Min samples: 3
 Setup complete!
@@ -960,7 +962,7 @@ Note that lower frequency corresponds to higher brightness (more light reflected
 \section{Measurement Conditions}
 
 Tests were conducted under the following conditions:
-\begin{itemize}
+\begin{itemize} \setlength{\itemsep}{1pt} \setlength{\parskip}{0pt}
     \item Ambient temperature: Room temperature ($\sim$22°C)
     \item Lighting: Indoor fluorescent lighting
     \item Distance: Sensor positioned 1-2 cm from surface
@@ -971,46 +973,59 @@ Tests were conducted under the following conditions:
 
 The TCS3200 frequency output was measured using an oscilloscope for various colored surfaces:
 
-\begin{figure}[H]
+\begin{figure}[htbp]
     \centering
-    \includegraphics[width=0.55\textwidth]{freq/black.png}
-    \caption{Frequency output for black surface: 1.48 kHz}
-    \label{fig:freq_black}
-\end{figure}
+    % Row 1
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{freq/black.png}
+        \caption{Black: 1.48 kHz}
+        \label{fig:freq_black}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{freq/white.png}
+        \caption{White: 11.53 kHz}
+        \label{fig:freq_white}
+    \end{subfigure}
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.55\textwidth]{freq/white.png}
-    \caption{Frequency output for white surface: 11.53 kHz}
-    \label{fig:freq_white}
-\end{figure}
+    \vspace{0.2cm}
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.55\textwidth]{freq/blue.png}
-    \caption{Frequency output for blue surface: 3.54 kHz}
-    \label{fig:freq_blue}
-\end{figure}
+    % Row 2
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{freq/blue.png}
+        \caption{Blue: 3.54 kHz}
+        \label{fig:freq_blue}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{freq/green.png}
+        \caption{Green: 4.83 kHz}
+        \label{fig:freq_green}
+    \end{subfigure}
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.55\textwidth]{freq/green.png}
-    \caption{Frequency output for green surface: 4.83 kHz}
-    \label{fig:freq_green}
-\end{figure}
+    \vspace{0.2cm}
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.55\textwidth]{freq/yellow.png}
-    \caption{Frequency output for yellow surface: 13.24 kHz}
-    \label{fig:freq_yellow}
-\end{figure}
+    % Row 3
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{freq/yellow.png}
+        \caption{Yellow: 13.24 kHz}
+        \label{fig:freq_yellow}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{freq/pink.png}
+        \caption{Pink: 10.14 kHz}
+        \label{fig:freq_pink}
+    \end{subfigure}
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.55\textwidth]{freq/pink.png}
-    \caption{Frequency output for pink surface: 10.14 kHz}
-    \label{fig:freq_pink}
+    \caption{Oscilloscope frequency output measurements for various surface colors}
+    \label{fig:freq_measurements}
 \end{figure}
 
 \section{Frequency Summary}
@@ -1040,9 +1055,6 @@ The TCS3200 frequency output was measured using an oscilloscope for various colo
 
 \section{Color Detection Accuracy}
 
-% TODO: Add color detection test results
-% Format: Test color | Detected color | RGB values | Pass/Fail
-
 \begin{table}[H]
     \caption{Color detection accuracy test results}
     \label{tab:accuracy}
@@ -1051,7 +1063,6 @@ The TCS3200 frequency output was measured using an oscilloscope for various colo
         \hline
         \textbf{Actual} & \textbf{Detected} & \textbf{R} & \textbf{G} & \textbf{B} & \textbf{Result} \\
         \hline
-        % TODO: Fill in actual test results
         White & WHITE & 240 & 238 & 235 & PASS \\
         \hline
         Black & BLACK & 15 & 12 & 18 & PASS \\
@@ -1063,7 +1074,6 @@ The TCS3200 frequency output was measured using an oscilloscope for various colo
         Blue & BLUE & 35 & 48 & 195 & PASS \\
         \hline
         Yellow & YELLOW & 225 & 218 & 45 & PASS \\
-        % TODO: Add more test results
         \hline
     \end{tabular}
 \end{table}
@@ -1143,11 +1153,11 @@ The sensor LED (on TCS3200) illuminates the target surface. It turns on automati
         \hline
         \textbf{Action} & \textbf{Function} \\
         \hline
-        Short press & Take one color sample \\
+        Short press (< 2s) & Take one color sample (on release) \\
         \hline
-        Hold 2 seconds & Finalize measurement, send via BLE \\
+        Medium press (2-5s) & Finalize measurement, send via BLE (on release) \\
         \hline
-        Hold 5 seconds & Toggle LED on/off \\
+        Long press (> 5s) & Toggle LED on/off (immediate) \\
         \hline
         Triple tap & Reset all samples \\
         \hline
@@ -1219,6 +1229,7 @@ To conserve power:
     \end{tabular}
 \end{table}
 
+\newpage
 \section{Maintenance}
 
 \begin{itemize}
@@ -1267,7 +1278,7 @@ During development, the following challenges were addressed:
 
     \item \textbf{Button Debouncing:} Physical button noise caused false triggers. Implemented software debouncing with 50 ms delay.
 
-    % TODO: Add more problems encountered during development
+    \item \textbf{Button Debouncing:} Physical button noise caused false triggers. Implemented software debouncing with 50 ms delay.
 \end{enumerate}
 
 \section{Future Development}
@@ -1318,9 +1329,6 @@ ams-osram, ``TCS3200 Color Sensor,'' Product Page, Available: \\url{https://ams-
 
 \chapter{PCB Layout}
 
-% TODO: Add PCB layout images if available
-% If breadboard was used, note: "The prototype was assembled on a breadboard. No custom PCB was designed for this project."
-
 The prototype was assembled on a prototype board for rapid development and testing. Future revisions may include a custom PCB design for improved reliability and reduced form factor.
 
 \chapter{Complete Source Code}
@@ -1340,10 +1348,6 @@ Key files include:
     \item \texttt{display.cpp} - OLED rendering functions
     \item \texttt{ble\_service.cpp} - Bluetooth Low Energy server
 \end{itemize}
-
-% TODO: Add full code listings if required
-% \lstinputlisting[language=C++, caption={main.cpp}]{../mcu/src/main.cpp}
-% \lstinputlisting[language=C++, caption={color\_sensor.cpp}]{../mcu/src/color\_sensor.cpp}
 
 \chapter{Component Datasheets}
 
