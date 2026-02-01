@@ -3,6 +3,13 @@
 > Detect any surface color with an ESP32, display it on OLED, and sync to your phone via Bluetooth.
 
 This project combines hardware and software to create a portable color detection tool. Hold the sensor against any surface, press the button to sample, and get accurate RGB values with automatic color naming.
+<br>
+
+<p align="center">
+  <img src="report/system_photo_1.jpg" alt="Surface Color Detector Device" width="45%">
+  &nbsp; &nbsp;
+  <img src="report/main_screen_1.jpg" alt="Mobile App Interface" width="25%">
+</p>
 
 ---
 
