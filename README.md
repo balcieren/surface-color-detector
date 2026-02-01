@@ -43,7 +43,7 @@ graph LR
 |--------|-------------|------|
 | [`mcu/`](./mcu) | ESP32 firmware written in C++ using PlatformIO | [→ mcu/README.md](./mcu/README.md) |
 | [`mobile/`](./mobile) | React Native app built with Expo | [→ mobile/README.md](./mobile/README.md) |
-| [`report/`](./report) | Circuit schematic and wiring guide | [→ report/README.md](./report/README.MD) |
+| [`report/`](./report) | Wiring diagram and wiring guide | [→ report/README.md](./report/README.MD) |
 
 ---
 
