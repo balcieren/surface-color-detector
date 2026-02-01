@@ -1176,12 +1176,21 @@ The sensor LED (on TCS3200) illuminates the target surface. It turns on automati
     \item Press button to start a new measurement
 \end{enumerate}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
     \centering
-    \begin{tikzpicture}
-        \draw[thick, dashed] (0,0) rectangle (8,4);
-        \node[align=center] at (4,2) {\textbf{[IMAGE PLACEHOLDER]}\\[0.3cm]Measurement Positioning};
-    \end{tikzpicture}
+    \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{positioning_1.jpg}
+        \caption{Sensor placement}
+        \label{fig:pos_1}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{positioning_2.jpg}
+        \caption{Measurement in progress}
+        \label{fig:pos_2}
+    \end{subfigure}
     \caption{Proper sensor positioning for measurement}
     \label{fig:m_positioning}
 \end{figure}
