@@ -8,9 +8,9 @@ ESP32 firmware for the Surface Color Detector. Reads color from a TCS3200 sensor
 
 | Action | Result |
 |--------|--------|
-| **Short press** | Take one sample, update running average on display |
-| **Long press (2s)** | Finalize reading, send via BLE, show result |
-| **Long press (5s)** | Toggle LED on/off (power saving mode) |
+| **Short press (< 2s)** | Take one sample, update running average on display (on release) |
+| **Medium press (2s - 5s)** | Finalize reading, send via BLE, show result (on release) |
+| **Long press (> 5s)** | Toggle LED on/off (power saving mode) (triggers immediately) |
 | **Triple tap** | Reset all samples and start fresh |
 | **Press after result** | Dismiss and continue |
 
